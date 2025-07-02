@@ -6,15 +6,17 @@ import {
   FileText, 
   Mail, 
   Users, 
-  Settings 
+  Settings,
+  MessageSquare
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Quote Requests', href: '/quote-requests', icon: MessageSquare },
   { name: 'Bookings', href: '/bookings', icon: Calendar },
+  { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Invoices', href: '/invoices', icon: FileText },
   { name: 'Emails', href: '/emails', icon: Mail },
-  { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

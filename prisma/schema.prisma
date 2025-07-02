@@ -58,3 +58,23 @@ model Email {
   sentAt    DateTime?
   createdAt DateTime @default(now())
 }
+
+model QuoteRequest {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  service      String
+  propertySize String?
+  message      String?
+  status       String   @default("new") // new, contacted, quoted, converted, declined
+  adminNotes   String?
+  notes        String?
+  submittedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+}
