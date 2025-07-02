@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  bookings      Booking[]
+  invoices      Invoice[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  service     String
+  date        DateTime
+  time        String
+  address     String
+  status      String   @default("pending")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  invoices    Invoice[]
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  invoiceId  String   @unique
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  bookingId  String?
+  booking    Booking? @relation(fields: [bookingId], references: [id])
+  amount     Float
+  issueDate  DateTime @default(now())
+  dueDate    DateTime
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Email {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  content   String
+  status    String   @default("draft")
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+}
