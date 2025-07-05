@@ -32,29 +32,63 @@ export default function QuoteRequests() {
     }
   }
 
+
+
+  // 
   const updateRequestStatus = async (id, status, adminNotes = '') => {
     try {
-      const response = await fetch('/api/quote-requests', {
+        setLoading(true); // Add a loading state
+        
+        const response = await fetch('/api/quote-requests', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
         },
         body: JSON.stringify({ id, status, adminNotes }),
-      })
+        });
 
-      if (response.ok) {
-        // Update local state
-        setRequests(requests.map(req => 
-          req.id === id ? { ...req, status, adminNotes } : req
-        ))
-        setShowModal(false)
-        setSelectedRequest(null)
-      }
+        if (!response.ok) {
+        throw new Error('Failed to update status');
+        }
+
+        const result = await response.json();
+        
+        // Update local state with the updated request
+        setRequests(prevRequests => 
+        prevRequests.map(req => 
+            req.id === id ? { ...req, status, adminNotes } : req
+        )
+        );
+        
+        // Close modal
+        setShowModal(false);
+        setSelectedRequest(null);
+        
+        // Update status counts (add this state variable)
+        const updatedStatusCounts = {...statusCounts};
+        
+        // Decrement previous status count
+        const previousStatus = requests.find(req => req.id === id)?.status || '';
+        if (previousStatus && updatedStatusCounts[previousStatus]) {
+        updatedStatusCounts[previousStatus]--;
+        }
+        
+        // Increment new status count
+        updatedStatusCounts[status] = (updatedStatusCounts[status] || 0) + 1;
+        setStatusCounts(updatedStatusCounts);
+        
+        // Show success notification
+        // You can implement a toast notification system here
     } catch (error) {
-      console.error('Error updating request:', error)
+        console.error('Error updating request:', error);
+        // Show error notification
+    } finally {
+        setLoading(false);
     }
   }
 
+
+  
   const deleteRequest = async (id) => {
     if (confirm('Are you sure you want to delete this quote request?')) {
       try {

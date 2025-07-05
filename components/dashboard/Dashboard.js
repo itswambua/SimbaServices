@@ -5,6 +5,21 @@ import RecentActivity from './RecentActivity'
 import { Calendar, DollarSign, FileText, Users, Clock } from 'lucide-react'
 
 export default function Dashboard() {
+
+
+
+  const fetchRealtimeActivity = () => {
+  // In a real app, you might use websockets or polling
+  // For now, we'll simulate with a timer
+    const activityTimer = setInterval(() => {
+      fetchStats();
+    }, 30000); // Check for new activity every 30 seconds
+    
+    return () => clearInterval(activityTimer);
+  }
+
+
+
   const [stats, setStats] = useState({
     totalBookings: 0,
     totalRevenue: 0,
@@ -16,6 +31,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchStats()
+    const cleanup = fetchRealtimeActivity()
+
+    return () => {
+    cleanup(); // Clean up the timer when component unmounts
+    }
   }, [])
 
   const fetchStats = async () => {
