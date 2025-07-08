@@ -223,7 +223,7 @@ export default function Settings() {
               <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Notification Settings</h4>
                 
-                {settings.notifications.emailNotifications && (
+                {/* {settings.notifications.emailNotifications && (
                   <div className="mb-3">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Email Template
@@ -237,7 +237,7 @@ export default function Settings() {
                       <option value="detailed">Detailed Template</option>
                     </select>
                   </div>
-                )}
+                )} */}
                 
                 {settings.notifications.smsNotifications && (
                   <div className="mb-3">
