@@ -54,11 +54,28 @@
 //   }
 // }
 
+// pages/api/bookings/index.js
 import { prisma } from '../../../lib/prisma'
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
+      // Check if only count is requested
+      if (req.query.countOnly === 'true') {
+        const whereClause = {};
+        
+        // Filter by status if provided
+        if (req.query.status) {
+          whereClause.status = req.query.status;
+        }
+        
+        const count = await prisma.booking.count({
+          where: whereClause
+        });
+        
+        return res.status(200).json({ count });
+      }
+      
       const bookings = await prisma.booking.findMany({
         include: { customer: true },
         orderBy: { date: 'desc' }

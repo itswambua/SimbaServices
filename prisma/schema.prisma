@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -45,18 +46,21 @@ model Invoice {
   issueDate  DateTime @default(now())
   dueDate    DateTime
   status     String   @default("pending")
+  notes      String?
+  terms      String?
+  items      String?  // JSON string of line items
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
 model Email {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   to        String
   subject   String
-  content   String
-  status    String   @default("draft")
+  content   String    @db.Text
+  status    String    @default("draft")
   sentAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model QuoteRequest {
@@ -77,4 +81,23 @@ model QuoteRequest {
   @@index([status])
   @@index([createdAt])
   @@index([email])
+}
+
+model Notification {
+  id             String   @id @default(cuid())
+  type           String   // booking, payment, invoice, review, system, customer, quote
+  title          String
+  message        String
+  read           Boolean  @default(false)
+  actionUrl      String?
+  actionText     String?
+  additionalInfo String?  // JSON string with additional data
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String?  // For user-specific notifications
+
+  @@index([read])
+  @@index([type])
+  @@index([createdAt])
+  @@index([userId])
 }

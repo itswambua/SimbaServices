@@ -1,16 +1,40 @@
-// pages/api/quote-requests.js
+// pages/api/quote-requests.js (update)
 import { prisma } from '../../lib/prisma'
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      // Only allow authenticated admin users to view submissions
-      // You can add authentication middleware here
+      // Check if only count is requested
+      if (req.query.countOnly === 'true') {
+        const whereClause = {};
+        
+        // Filter by status if provided
+        if (req.query.status) {
+          whereClause.status = req.query.status;
+        }
+        
+        const count = await prisma.quoteRequest.count({
+          where: whereClause
+        });
+        
+        return res.status(200).json({ count });
+      }
+      
+      // Get limit if provided
+      const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+      
+      // Build where clause
+      const whereClause = {};
+      if (req.query.status) {
+        whereClause.status = req.query.status;
+      }
       
       const quoteRequests = await prisma.quoteRequest.findMany({
+        where: whereClause,
         orderBy: {
           createdAt: 'desc'
-        }
+        },
+        ...(limit && { take: limit })
       })
       
       res.status(200).json(quoteRequests)
@@ -19,6 +43,9 @@ export default async function handler(req, res) {
       res.status(500).json({ error: 'Failed to fetch quote requests' })
     }
   }
+
+
+
 
   if (req.method === 'POST') {
     try {

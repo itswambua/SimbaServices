@@ -1,8 +1,30 @@
+// pages/api/customers/index.js
 import { prisma } from '../../../lib/prisma'
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
+      // Check if only count is requested
+      if (req.query.countOnly === 'true') {
+        const whereClause = {};
+        
+        // Check for new customers (last 7 days)
+        if (req.query.newOnly === 'true') {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          
+          whereClause.createdAt = {
+            gte: sevenDaysAgo
+          };
+        }
+        
+        const count = await prisma.customer.count({
+          where: whereClause
+        });
+        
+        return res.status(200).json({ count });
+      }
+      
       const customers = await prisma.customer.findMany({
         include: {
           _count: {
