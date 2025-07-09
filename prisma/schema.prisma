@@ -101,3 +101,45 @@ model Notification {
   @@index([createdAt])
   @@index([userId])
 }
+
+
+model PageView {
+  id        String   @id @default(cuid())
+  page      String
+  timestamp DateTime
+  userAgent String?
+  referrer  String?
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([sessionId])
+  @@index([page])
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventName  String
+  properties String?  // JSON string
+  timestamp  DateTime
+  page       String
+  sessionId  String
+  createdAt  DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([eventName])
+  @@index([sessionId])
+}
+
+model TrafficSource {
+  id        String   @id @default(cuid())
+  source    String   // 'organic', 'direct', 'social', 'referral', 'email'
+  medium    String?  // 'search', 'facebook', 'twitter', etc.
+  campaign  String?
+  sessionId String
+  timestamp DateTime
+  createdAt DateTime @default(now())
+
+  @@index([source])
+  @@index([timestamp])
+}

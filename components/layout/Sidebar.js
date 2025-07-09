@@ -1,4 +1,4 @@
-// components/layout/Sidebar.js
+// components/layout/Sidebar.js (Updated)
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -9,7 +9,8 @@ import {
   Mail, 
   Users, 
   Settings,
-  MessageSquare
+  MessageSquare,
+  BarChart3
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -70,6 +71,12 @@ export default function Sidebar() {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { 
+      name: 'Analytics', 
+      href: '/analytics', 
+      icon: BarChart3,
+      description: 'Traffic & Revenue Reports'
+    },
+    { 
       name: 'Quote Requests', 
       href: '/quote-requests', 
       icon: MessageSquare,
@@ -117,15 +124,16 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
                   isActive
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
+                title={item.description || item.name}
               >
                 <div className="flex items-center">
                   <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
+                  <span>{item.name}</span>
                 </div>
                 
                 {item.count > 0 && (
@@ -135,6 +143,12 @@ export default function Sidebar() {
                     {item.count > 99 ? '99+' : item.count}
                   </span>
                 )}
+                
+                {item.name === 'Analytics' && (
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  </div>
+                )}
               </Link>
             )
           })}
@@ -143,18 +157,34 @@ export default function Sidebar() {
       
       <div className="px-4 mt-10">
         <div className="p-4 bg-blue-50 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Need Help?</h3>
+          <h3 className="text-sm font-medium text-blue-800 mb-2">Analytics Insights</h3>
           <p className="text-xs text-blue-600 mb-3">
+            Track your website performance and revenue trends in real-time.
+          </p>
+          <Link 
+            href="/analytics"
+            className="text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded flex items-center justify-center transition-colors"
+          >
+            <BarChart3 className="w-3 h-3 mr-1" />
+            View Analytics
+          </Link>
+        </div>
+      </div>
+      
+      {/* <div className="px-4 mt-6">
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-800 mb-2">Need Help?</h3>
+          <p className="text-xs text-gray-600 mb-3">
             Contact technical support for assistance with the dashboard.
           </p>
           <a 
             href="mailto:support@simbacleaning.com"
-            className="text-xs text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded flex items-center justify-center"
+            className="text-xs text-white bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded flex items-center justify-center transition-colors"
           >
             Contact Support
           </a>
         </div>
-      </div>
+      </div> */}
     </aside>
   )
 }
