@@ -1,4 +1,7 @@
-// components/layout/Sidebar.js (Updated)
+
+
+
+// components/layout/Sidebar.js - Updated with Payments link
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -10,7 +13,8 @@ import {
   Users, 
   Settings,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  CreditCard
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -20,7 +24,8 @@ export default function Sidebar() {
     bookings: 0,
     customers: 0,
     invoices: 0,
-    emails: 0
+    emails: 0,
+    overduePayments: 0
   })
   
   useEffect(() => {
@@ -44,7 +49,7 @@ export default function Sidebar() {
       const emailResponse = await fetch('/api/emails?status=unread&countOnly=true')
       const emailData = await emailResponse.json()
       
-      // Fetch invoices with 'overdue' status
+      // Fetch invoices with 'overdue' status for payments notification
       const invoiceResponse = await fetch('/api/invoices?status=overdue&countOnly=true')
       const invoiceData = await invoiceResponse.json()
       
@@ -61,7 +66,8 @@ export default function Sidebar() {
         bookings: bookingData.count || 0,
         customers: customerData.count || 0,
         invoices: invoiceData.count || 0,
-        emails: emailData.count || 0
+        emails: emailData.count || 0,
+        overduePayments: invoiceData.count || 0 // Use overdue invoices for payment notifications
       })
     } catch (error) {
       console.error('Error fetching notification counts:', error)
@@ -99,6 +105,13 @@ export default function Sidebar() {
       href: '/invoices', 
       icon: FileText,
       count: counts.invoices
+    },
+    { 
+      name: 'Payments', 
+      href: '/payments', 
+      icon: CreditCard,
+      count: counts.overduePayments,
+      description: 'Payment tracking & overdue alerts'
     },
     { 
       name: 'Emails', 
@@ -155,7 +168,7 @@ export default function Sidebar() {
         </div>
       </nav>
       
-      <div className="px-4 mt-10">
+      {/* <div className="px-4 mt-10">
         <div className="p-4 bg-blue-50 rounded-lg">
           <h3 className="text-sm font-medium text-blue-800 mb-2">Analytics Insights</h3>
           <p className="text-xs text-blue-600 mb-3">
@@ -171,18 +184,22 @@ export default function Sidebar() {
         </div>
       </div>
       
-      {/* <div className="px-4 mt-6">
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-800 mb-2">Need Help?</h3>
-          <p className="text-xs text-gray-600 mb-3">
-            Contact technical support for assistance with the dashboard.
+      <div className="px-4 mt-6">
+        <div className="p-4 bg-green-50 rounded-lg">
+          <h3 className="text-sm font-medium text-green-800 mb-2">Payment Status</h3>
+          <p className="text-xs text-green-600 mb-3">
+            {counts.overduePayments > 0 
+              ? `${counts.overduePayments} overdue payment${counts.overduePayments > 1 ? 's' : ''} need attention`
+              : 'All payments are up to date!'
+            }
           </p>
-          <a 
-            href="mailto:support@simbacleaning.com"
-            className="text-xs text-white bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded flex items-center justify-center transition-colors"
+          <Link 
+            href="/payments"
+            className="text-xs text-white bg-green-600 hover:bg-green-700 px-3 py-2 rounded flex items-center justify-center transition-colors"
           >
-            Contact Support
-          </a>
+            <CreditCard className="w-3 h-3 mr-1" />
+            View Payments
+          </Link>
         </div>
       </div> */}
     </aside>

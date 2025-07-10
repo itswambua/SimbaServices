@@ -1,4 +1,8 @@
-import { useState } from 'react'
+
+
+
+// components/forms/CustomerForm.js 
+import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 
 export default function CustomerForm({ customer, onClose, onSave }) {
@@ -8,6 +12,24 @@ export default function CustomerForm({ customer, onClose, onSave }) {
     phone: customer?.phone || '',
     address: customer?.address || ''
   })
+
+  useEffect(() => {
+    // Check for URL parameters when component mounts
+    const urlParams = new URLSearchParams(window.location.search)
+    
+    if (urlParams.get('createNew') && !customer) {
+      setFormData({
+        name: urlParams.get('name') || '',
+        email: urlParams.get('email') || '',
+        phone: urlParams.get('phone') || '',
+        address: urlParams.get('address') || ''
+      })
+      
+      // Clear URL parameters after extracting them
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [customer])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -53,6 +75,7 @@ export default function CustomerForm({ customer, onClose, onSave }) {
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              placeholder="Enter customer name"
             />
           </div>
           
@@ -64,6 +87,7 @@ export default function CustomerForm({ customer, onClose, onSave }) {
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              placeholder="Enter email address"
             />
           </div>
           
@@ -74,6 +98,7 @@ export default function CustomerForm({ customer, onClose, onSave }) {
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              placeholder="Enter phone number"
             />
           </div>
           
@@ -84,6 +109,7 @@ export default function CustomerForm({ customer, onClose, onSave }) {
               onChange={(e) => setFormData({...formData, address: e.target.value})}
               rows={3}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              placeholder="Enter customer address"
             />
           </div>
           

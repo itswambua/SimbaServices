@@ -1,6 +1,7 @@
 
 
-// pages/api/invoices/index.js
+
+// pages/api/invoices/index.js - Fixed with better error handling
 import { prisma } from '../../../lib/prisma'
 
 export default async function handler(req, res) {
@@ -68,12 +69,41 @@ export default async function handler(req, res) {
     try {
       const { customerId, bookingId, amount, dueDate, items, notes } = req.body
       
+      // Validation
       if (!customerId) {
         return res.status(400).json({ error: 'Customer ID is required' })
       }
 
+      if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: 'Valid amount is required' })
+      }
+
       if (!dueDate) {
         return res.status(400).json({ error: 'Due date is required' })
+      }
+
+      // Check if customer exists
+      const customer = await prisma.customer.findUnique({
+        where: { id: customerId }
+      })
+
+      if (!customer) {
+        return res.status(400).json({ error: 'Customer not found' })
+      }
+
+      // Check if booking exists (if provided)
+      if (bookingId) {
+        const booking = await prisma.booking.findUnique({
+          where: { id: bookingId }
+        })
+
+        if (!booking) {
+          return res.status(400).json({ error: 'Booking not found' })
+        }
+
+        if (booking.customerId !== customerId) {
+          return res.status(400).json({ error: 'Booking does not belong to the selected customer' })
+        }
       }
       
       // Generate invoice ID
@@ -85,7 +115,8 @@ export default async function handler(req, res) {
         invoiceId,
         customerId,
         amount: parseFloat(amount),
-        dueDate: new Date(dueDate)
+        dueDate: new Date(dueDate),
+        status: 'pending'
       }
       
       // Only add optional fields if they exist
@@ -94,20 +125,18 @@ export default async function handler(req, res) {
       }
       
       if (items) {
-        invoiceData.items = items
+        // Validate items is valid JSON
+        try {
+          JSON.parse(items)
+          invoiceData.items = items
+        } catch (e) {
+          return res.status(400).json({ error: 'Invalid items format' })
+        }
       }
       
-      // Check if notes field exists in the schema before adding it
-      try {
-        // Check if notes is defined in the schema by querying an invoice with notes field
-        await prisma.$queryRaw`SELECT "notes" FROM "Invoice" LIMIT 1`;
-        // If no error is thrown, add notes to the invoice data
-        if (notes) {
-          invoiceData.notes = notes
-        }
-      } catch (schemaError) {
-        console.warn('Notes field is not defined in the schema, skipping it');
-        // Don't add notes field if it's not in the schema
+      // Add notes if provided
+      if (notes) {
+        invoiceData.notes = notes
       }
       
       // Create the invoice
@@ -121,7 +150,22 @@ export default async function handler(req, res) {
       
     } catch (error) {
       console.error('Error creating invoice:', error)
-      res.status(500).json({ error: 'Failed to create invoice: ' + error.message })
+      
+      // Handle specific Prisma errors
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'Duplicate invoice ID. Please try again.' })
+      }
+      
+      if (error.code === 'P2003') {
+        return res.status(400).json({ error: 'Invalid customer or booking reference' })
+      }
+      
+      res.status(500).json({ error: 'Failed to create invoice: ' + (error.message || 'Unknown error') })
     }
+  }
+
+  if (!['GET', 'POST'].includes(req.method)) {
+    res.setHeader('Allow', ['GET', 'POST'])
+    res.status(405).end(`Method ${req.method} Not Allowed`)
   }
 }

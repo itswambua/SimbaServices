@@ -1,4 +1,9 @@
+
+
+
+// pages/customers.js 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { User, Phone, Mail, MapPin, Search } from 'lucide-react'
 import CustomerForm from '../components/forms/CustomerForm'
 
@@ -7,10 +12,17 @@ export default function Customers() {
   const [showForm, setShowForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     fetchCustomers()
-  }, [])
+    
+    // Check if we should show the form automatically (from URL params)
+    if (router.query.createNew) {
+      setEditingCustomer(null)
+      setShowForm(true)
+    }
+  }, [router.query])
 
   const fetchCustomers = async () => {
     try {
@@ -30,10 +42,15 @@ export default function Customers() {
     if (editingCustomer) {
       setCustomers(customers.map(c => c.id === savedCustomer.id ? savedCustomer : c))
     } else {
-      setCustomers([...customers, savedCustomer])
+      setCustomers([savedCustomer, ...customers])
     }
     setEditingCustomer(null)
     setShowForm(false)
+    
+    // Clear URL parameters after successful save
+    if (router.query.createNew) {
+      router.replace('/customers', undefined, { shallow: true })
+    }
   }
 
   const handleEdit = (customer) => {
@@ -61,10 +78,21 @@ export default function Customers() {
     setShowForm(true)
   }
 
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setEditingCustomer(null)
+    
+    // Clear URL parameters when closing form
+    if (router.query.createNew) {
+      router.replace('/customers', undefined, { shallow: true })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h1 className="text-2xl font-bold">Loading customers...</h1>
         </div>
       </div>
@@ -166,10 +194,7 @@ export default function Customers() {
       {showForm && (
         <CustomerForm
           customer={editingCustomer}
-          onClose={() => {
-            setShowForm(false)
-            setEditingCustomer(null)
-          }}
+          onClose={handleCloseForm}
           onSave={handleCustomerSaved}
         />
       )}

@@ -1,11 +1,19 @@
 
 
-// components/forms/BookingForm.js
+
+// components/forms/BookingForm.js 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Plus, User } from 'lucide-react'
 
 export default function BookingForm({ booking, onClose, onSave }) {
   const [customers, setCustomers] = useState([])
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false)
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  })
   const [formData, setFormData] = useState({
     customerId: booking?.customerId || '',
     service: booking?.service || '',
@@ -15,10 +23,23 @@ export default function BookingForm({ booking, onClose, onSave }) {
     notes: booking?.notes || ''
   })
   const [loading, setLoading] = useState(true)
+  const [creatingCustomer, setCreatingCustomer] = useState(false)
   const [customerDetails, setCustomerDetails] = useState({})
 
   useEffect(() => {
     fetchCustomers()
+    
+    // Check if we have pre-filled customer data from URL params
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('customerName')) {
+      setNewCustomer({
+        name: urlParams.get('customerName') || '',
+        email: urlParams.get('customerEmail') || '',
+        phone: urlParams.get('customerPhone') || '',
+        address: ''
+      })
+      setShowNewCustomerForm(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -54,6 +75,54 @@ export default function BookingForm({ booking, onClose, onSave }) {
     } catch (error) {
       console.error('Error fetching customers:', error)
       setLoading(false)
+    }
+  }
+
+  const handleCreateNewCustomer = async () => {
+    if (!newCustomer.name || !newCustomer.email) {
+      alert('Please fill in at least name and email for the new customer')
+      return
+    }
+
+    setCreatingCustomer(true)
+    try {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCustomer)
+      })
+      
+      if (response.ok) {
+        const createdCustomer = await response.json()
+        
+        // Add new customer to the list
+        setCustomers(prev => [createdCustomer, ...prev])
+        
+        // Update customer details map
+        setCustomerDetails(prev => ({
+          ...prev,
+          [createdCustomer.id]: createdCustomer
+        }))
+        
+        // Select the new customer
+        setFormData(prev => ({
+          ...prev,
+          customerId: createdCustomer.id,
+          address: createdCustomer.address || prev.address
+        }))
+        
+        // Reset new customer form
+        setNewCustomer({ name: '', email: '', phone: '', address: '' })
+        setShowNewCustomerForm(false)
+      } else {
+        console.error('Error response:', await response.text())
+        alert('Failed to create customer')
+      }
+    } catch (error) {
+      console.error('Error creating customer:', error)
+      alert('Failed to create customer')
+    } finally {
+      setCreatingCustomer(false)
     }
   }
 
@@ -94,7 +163,7 @@ export default function BookingForm({ booking, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">
             {booking ? 'Edit Booking' : 'New Booking'}
@@ -106,21 +175,104 @@ export default function BookingForm({ booking, onClose, onSave }) {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Customer</label>
-            <select
-              required
-              value={formData.customerId}
-              onChange={(e) => handleCustomerChange(e.target.value)}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-              disabled={loading}
-            >
-              <option value="">Select Customer</option>
-              {customers.map(customer => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Customer</label>
+            
+            {!showNewCustomerForm ? (
+              <div className="space-y-2">
+                <select
+                  required
+                  value={formData.customerId}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2"
+                  disabled={loading}
+                >
+                  <option value="">Select Customer</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name} - {customer.email}
+                    </option>
+                  ))}
+                </select>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowNewCustomerForm(true)}
+                  className="w-full flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Customer
+                </button>
+              </div>
+            ) : (
+              <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-gray-900 flex items-center">
+                    <User className="w-4 h-4 mr-2" />
+                    New Customer Details
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCustomerForm(false)
+                      setNewCustomer({ name: '', email: '', phone: '', address: '' })
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Customer Name *"
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="email"
+                      placeholder="Email Address *"
+                      value={newCustomer.email}
+                      onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="tel"
+                      placeholder="Phone Number"
+                      value={newCustomer.phone}
+                      onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Address"
+                      value={newCustomer.address}
+                      onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={handleCreateNewCustomer}
+                  disabled={creatingCustomer || !newCustomer.name || !newCustomer.email}
+                  className="mt-3 w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:opacity-50 text-sm"
+                >
+                  {creatingCustomer ? 'Creating...' : 'Create Customer & Use'}
+                </button>
+              </div>
+            )}
           </div>
           
           <div>
@@ -174,9 +326,9 @@ export default function BookingForm({ booking, onClose, onSave }) {
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               disabled={loading}
             />
-            {formData.customerId && !formData.address && (
+            {formData.customerId && customerDetails[formData.customerId]?.address && (
               <p className="mt-1 text-sm text-gray-500">
-                Using customer's address
+                Auto-filled from customer's address
               </p>
             )}
           </div>
@@ -196,7 +348,7 @@ export default function BookingForm({ booking, onClose, onSave }) {
             <button
               type="submit"
               className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              disabled={loading}
+              disabled={loading || (!formData.customerId && !showNewCustomerForm)}
             >
               {loading ? (
                 <div className="flex justify-center items-center">
